@@ -1,0 +1,49 @@
+name: Sync LeetCode Solutions
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout Destination Repository
+        uses: actions/checkout@v4
+        with:
+          repository: Sara0904-AI/EPAM-CoE-
+          token: ${{ secrets.DEST_REPO_TOKEN }}
+          path: destination
+
+      - name: Copy Solutions
+        run: |
+          rsync -av \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            source/ destination/
+
+      - name: Push Changes
+        run: |
+          cd destination
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync LeetCode Solutions"
+            git push origin HEAD:main
+          fi
